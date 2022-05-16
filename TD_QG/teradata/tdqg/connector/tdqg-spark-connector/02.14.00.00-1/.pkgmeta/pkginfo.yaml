@@ -1,0 +1,405 @@
+# The name of the software package (e.g. tdqg-node, tdqg-fabric)
+name: "tdqg-spark-connector"
+
+# The type of package (i.e.  NODE, FABRIC, CONNECTOR)
+type: "CONNECTOR"
+
+# The version of the package.
+version: "02.14.00.00-1"
+
+# The supported platform of the package (e.g. noarch for Java, else the platform defined by the watchdog.)
+platform: "noarch"
+
+# The date that the package was built in ISO-8601 format.
+buildDate: 2020-10-14T01:25+0000
+
+# Flags if a connector can be used to initiate queries. Applies to CONNECTOR packages only.
+queryPointSupport: TRUE
+
+# The name of the driver used to load the connector. Applies to CONNECTOR packages only.
+driverName: spark_driver
+
+# system environment variables that need to be set in driver process
+envNameValuePairs: "LANG=en_US.UTF-8;LC_ALL=en_US.UTF-8"
+
+# Initiator and remote connector.
+loaderConnectorName: "*.jar"
+remoteConnectorName: "*.jar"
+remoteConnectorClassName: "com.teradata.querygrid.qgc.spark.remote.SparkConnectorFactory"
+
+# The properties associated with a connector.  Applies to CONNECTOR packages only.
+
+connectorProperties:
+
+# order numbering scheme works like this:
+# 0-99 for required properties
+# 1000-1099 for the first group, no subGroup
+# 3200-3299 for the third group, second subGroup
+
+  # A required target hostname property.
+  - name: "server"
+    dataType: STRING
+    required: TRUE
+    appliesTo: TARGET
+    group: "basic"
+    order: 0
+
+  # An optional port property with default value
+  - name: "port"
+    dataType: INTEGER
+    defaultValue: 10016
+    appliesTo: TARGET
+    required: TRUE
+    validationRules:
+      min: 1025
+      max: 65535
+    group: "basic"
+    order: 1
+
+ # An optional temp DB name property with default value.
+  - name: "tempDbName"
+    dataType: STRING
+    defaultValue: default
+    appliesTo: TARGET
+    overridable: TRUE
+    group: "advanced"
+    order: 3000
+
+  # An optional database name property with default value.
+  - name: "databaseName"
+    dataType: STRING
+    defaultValue: default
+    appliesTo: TARGET
+    required: TRUE
+    group: "basic"
+    order: 2
+
+  - name: "executionType"
+    dataType: ENUM
+    defaultValue: THRIFTSERVER
+    appliesTo: TARGET
+    required: TRUE
+    enumValues:
+      - "THRIFTSERVER"
+      - "SPARK-SUBMIT"
+    group: "basic"
+    order: 4
+
+    # An optional enum property
+  - name: "security"
+    dataType: ENUM
+    defaultValue: NONE
+    appliesTo: TARGET
+    enumValues:
+      - "NONE"
+      - "KERBEROS"
+    group: "securityGroup"
+    order: 1000
+
+  # authUserName for security
+  - name: "authUserName"
+    dataType: STRING
+    defaultValue: hive
+    appliesTo: TARGET
+    group: "securityGroup"
+    order: 1001
+
+  # Password for security
+  - name: "authPassword"
+    dataType: PASSWORD
+    defaultValue:
+    appliesTo: TARGET
+    group: "securityGroup"
+    order: 1002
+
+ # keytab for kerberos
+  - name: "keytab"
+    dataType: STRING
+    defaultValue:
+    appliesTo: TARGET
+    group: "securityGroup"
+    order: 1003
+
+  - name: "sparkHome"
+    dataType: STRING
+    defaultValue: "/usr/hdp/current/spark2-client/"
+    appliesTo: TARGET
+    required: TRUE
+    group: "basic"
+    order: 5
+
+  - name: "confFilePaths"
+    dataType: STRING
+    defaultValue: "/etc/hadoop/conf/,/etc/spark2/conf/"
+    appliesTo: TARGET
+    required: TRUE
+    group: "basic"
+    order: 6
+
+     # List of hadoop properties
+  - name: "hadoopProperties"
+    dataType: STRING
+    appliesTo: TARGET
+    overridable: TRUE
+    group: "queryEngine"
+    order: 2002
+
+  # numExecutors
+  - name: "numExecutors"
+    dataType: INTEGER
+    appliesTo: BOTH
+    overridable: TRUE
+    validationRules:
+      min: 1
+      max: 10000
+    group: "queryEngine"
+    order: 2000
+
+  # An optional enable logging property with default value.
+  - name: "enableLogging"
+    dataType: ENUM
+    defaultValue: INFO
+    appliesTo: BOTH
+    enumValues:
+      - "NONE"
+      - "WARN"
+      - "INFO"
+      - "DEBUG"
+    group: "advanced"
+    order: 3001
+
+  # An optional default string size property with default value.
+  - name: "defaultStringSize"
+    dataType: LONG
+    defaultValue: 32000
+    appliesTo: TARGET
+    unitsi18nKey: characters
+    validationRules:
+      min: 1
+      max: 1048544000
+    overridable: TRUE
+    group: "advanced"
+    order: 3003
+
+  # An optional default binary size property with default value.
+  - name: "defaultBinarySize"
+    dataType: LONG
+    defaultValue: 64000
+    appliesTo: TARGET
+    unitsi18nKey: bytes
+    validationRules:
+      min: 1
+      max: 2097088000
+    overridable: TRUE
+    group: "advanced"
+    order: 3004
+
+  - name: "collectActivityCount"
+    dataType: BOOLEAN
+    defaultValue: FALSE
+    appliesTo: TARGET
+    overridable: TRUE
+    group: "advanced"
+    order: 3006
+
+  # An optional link buffer count property with default value.
+  - name: "linkBufferCount"
+    dataType: INTEGER
+    defaultValue: 4
+    appliesTo: BOTH
+    validationRules:
+      min: 2
+      max: 16
+    overridable: TRUE
+    group: "advanced"
+    subGroup: "fabric"
+    order: 3100
+
+  # An optional link buffer size property with units.
+  - name: "linkBufferSize"
+    dataType: LONG
+    defaultValue: 1048576
+    appliesTo: INITIATOR
+    unitsi18nKey: bytes
+    validationRules:
+      min: 73728
+      max: 10485760
+    overridable: TRUE
+    group: "advanced"
+    subGroup: "fabric"
+    order: 3101
+
+  # An optional link heartbeat interval property with default value.
+  - name: "linkHeartbeatInterval"
+    dataType: LONG
+    defaultValue: 3600000
+    appliesTo: BOTH
+    unitsi18nKey: milliseconds
+    validationRules:
+      min: 60000
+      max: 86400000
+    group: "advanced"
+    subGroup: "fabric"
+    order: 3102
+
+  # An optional link handshake timeout property with default value.
+  - name: "linkHandshakeTimeout"
+    dataType: LONG
+    defaultValue: 3600000
+    appliesTo: BOTH
+    unitsi18nKey: milliseconds
+    validationRules:
+      min: 60000
+      max: 86400000
+    group: "advanced"
+    subGroup: "fabric"
+    order: 3103
+
+  # An optional read timeout property with default value.
+  - name: "readTimeout"
+    dataType: LONG
+    defaultValue: 3600000
+    appliesTo: BOTH
+    unitsi18nKey: milliseconds
+    validationRules:
+      min: 300000
+      max: 86400000
+    overridable: TRUE
+    group: "advanced"
+    subGroup: "fabric"
+    order: 3104
+
+  # An optional write timeout property with default value.
+  - name: "writeTimeout"
+    dataType: LONG
+    defaultValue: 3600000
+    appliesTo: BOTH
+    unitsi18nKey: milliseconds
+    validationRules:
+      min: 300000
+      max: 86400000
+    overridable: TRUE
+    group: "advanced"
+    subGroup: "fabric"
+    order: 3105
+
+  # An optional response timeout property with default value.
+  - name: "responseTimeout"
+    dataType: LONG
+    defaultValue: 86400000
+    appliesTo: BOTH
+    unitsi18nKey: milliseconds
+    validationRules:
+      min: 1800000
+      max: 172800000
+    overridable: TRUE
+    group: "advanced"
+    subGroup: "fabric"
+    order: 3106
+
+  # An optional import duration timeout property with default value.
+  - name: "importTimeout"
+    dataType: LONG
+    defaultValue:
+    appliesTo: INITIATOR
+    unitsi18nKey: milliseconds
+    validationRules:
+      min: 300000
+      max: 432000000
+    overridable: TRUE
+    group: "advanced"
+    subGroup: "fabric"
+    order: 3107
+
+  # TO ADD LENGTH CHECK = 255 validationRules for STRING and PASSWORD
+
+  # An optional disable pushdown property with default value.
+  - name: "disablePushdown"
+    dataType: BOOLEAN
+    defaultValue: FALSE
+    appliesTo: INITIATOR
+    overridable: TRUE
+    group: "advanced"
+    order: 3005
+
+  # compressionCodec
+  - name: "compressionCodec"
+    dataType: ENUM
+    defaultValue: None
+    appliesTo: TARGET
+    enumValues:
+      - "None"
+      - "Deflate"
+      - "BZip2"
+      - "Gzip"
+      - "LZ4"
+      - "Snappy"
+    overridable: TRUE
+    group: "queryEngine"
+    order: 2003
+
+  - name: "connectionMaxIdleTime"
+    dataType: LONG
+    defaultValue: 86400
+    appliesTo: TARGET
+    unitsi18nKey: seconds
+    validationRules:
+      min: 1
+      max: 86400
+    group: "advanced"
+    subGroup: "connectionPooling"
+    order: 3200
+
+  - name: "connectionPoolSize"
+    dataType: INTEGER
+    defaultValue: 100
+    appliesTo: TARGET
+    validationRules:
+      min: 1
+      max: 10000
+    group: "advanced"
+    subGroup: "connectionPooling"
+    order: 3201
+
+  - name: "evictPeriodMin"
+    dataType: INTEGER
+    defaultValue: 30
+    appliesTo: TARGET
+    unitsi18nKey: minutes
+    validationRules:
+      min: 1
+      max: 1440
+    group: "advanced"
+    subGroup: "connectionPooling"
+    order: 3202
+
+  - name: "lobSupport"
+    dataType: BOOLEAN
+    defaultValue: TRUE
+    appliesTo: TARGET
+    overridable: TRUE
+    group: "advanced"
+    order: 3002
+
+  - name: "sslClientTrustStorePath"
+    dataType: STRING
+    appliesTo: TARGET
+    group: "securityGroup"
+    subGroup: ssl
+    order: 1100
+
+  - name: "sslClientTrustStorePassword"
+    dataType: PASSWORD
+    appliesTo: TARGET
+    group: "securityGroup"
+    subGroup: ssl
+    order: 1101
+
+  # An optional queue name property.
+  - name: "queueName"
+    dataType: STRING
+    defaultValue:
+    appliesTo: TARGET
+    overridable: TRUE
+    group: "queryEngine"
+    order: 2001

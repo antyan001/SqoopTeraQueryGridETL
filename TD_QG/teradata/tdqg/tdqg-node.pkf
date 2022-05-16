@@ -1,0 +1,3 @@
+HOMEOGENEOUS=1
+OS=SUSE
+RC_INIT=tdqg-node

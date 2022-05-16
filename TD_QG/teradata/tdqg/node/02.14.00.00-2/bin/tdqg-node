@@ -1,0 +1,311 @@
+#!/bin/bash
+# tdqg-node init script for Linux
+#
+# chkconfig: 345 63 37
+# description: Teradata QueryGrid Node
+
+### BEGIN INIT INFO
+# Provides: tdqg-node
+# Required-Start: $local_fs $network $syslog
+# Required-Stop: $local_fs $network $syslog
+# Default-Start: 3 4 5
+# Default-Stop:
+# Short-Description: Teradata QueryGrid Node
+# Description: A service for Teradata QueryGrid Node administration and monitoring.
+### END INIT INFO
+
+# Shell functions sourced from /etc/rc.status:
+#      rc_check         check and set local and overall rc status
+#      rc_status        check and set local and overall rc status
+#      rc_status -v     ditto but be verbose in local rc status
+#      rc_status -v -r  ditto and clear the local rc status
+#      rc_failed        set local and overall rc status to failed
+#      rc_reset         clear local rc status (overall remains)
+#      rc_exit          exit appropriate to overall rc status
+
+EXIT_STATUS=0
+
+CREATE_RC_STATUS_FUNCTIONS=false
+if [ -e /etc/rc.status ]; then
+    #Load rc_status functions for SUSE.
+   . /etc/rc.status
+elif [ -e /etc/init.d/functions ]; then
+    # RedHat/CentOS
+    . /etc/init.d/functions
+    CREATE_RC_STATUS_FUNCTIONS=true
+else
+    # ubuntu
+    # . /lib/lsb/init-functions # if executed tdqg-node script fails
+    CREATE_RC_STATUS_FUNCTIONS=true
+    # define rc functions
+    echo_success() {
+        echo "[ OK ]"
+    }
+
+    echo_failure(){
+        echo "[ FAILED ]"
+    }
+fi
+# create rc_status functions
+if [ "$CREATE_RC_STATUS_FUNCTIONS" = true ]; then
+   rc_reset ()
+   {
+     EXIT_STATUS=0
+     return ${EXIT_STATUS};
+   }
+
+   rc_failed ()
+   {
+      EXIT_STATUS=$1
+      return ${EXIT_STATUS}
+   }
+
+   rc_status ()
+   {
+      if [ "$1" = "-v" ]; then
+         case ${EXIT_STATUS} in
+            0)  echo_success             ;; # service running
+            1)  echo " stopped"             ;; # service dead (but has pid file)
+            2)  echo " stopped"             ;; # service dead (but has lock file)
+            3)  echo " stopped"      ;; # service not running
+            4)  echo " preinstall"   ;; # preinstall verification
+            5)  echo "unknown"          ;; # status is unknown
+            7)  echo_failure             ;; # status is failed
+          esac
+          echo
+      fi
+      return ${EXIT_CODE}
+   }
+
+fi
+
+# source tdqg-node environment variables 
+if [ -f /etc/opt/teradata/tdqg/node/tdqg-node.env ]; then
+    source /etc/opt/teradata/tdqg/node/tdqg-node.env
+else
+    echo "tdqg-node.env not found in /etc/opt/teradata/tdqg/node/. Exiting."
+    exit 1
+fi
+
+# load tdqg-node directory managment script
+if [ -f /etc/opt/teradata/tdqg/node/tdqg-node-dir-mgmt.sh ]; then
+    source /etc/opt/teradata/tdqg/node/tdqg-node-dir-mgmt.sh
+else
+    echo "tdqg-node-dir-mgmt not found in /etc/opt/teradata/tdqg/node/. Exiting."
+    exit 1
+fi
+
+# try to locate java
+. ${TDQG_NODE_NODE_CONFIG_DIR}/locate_java.sh
+
+# if preceding log directories don't exist then create them with appropriate permissions
+if [ ! -d "/var/opt/" ]; then
+    mkdir -m 755 /var/opt
+fi
+
+if [ ! -d "/var/opt/teradata/" ]; then
+    mkdir -m 755 /var/opt/teradata/
+fi
+
+# give TDQG_USER read and execute access to all preceding log directories
+setfacl -m u:${TDQG_NODE_USER}:rx /var/opt/
+setfacl -m u:${TDQG_NODE_USER}:rx /var/opt/teradata/
+
+# create the directories
+# (function def in tdqg-node-dir-mgmt.sh)
+makeDirs
+
+# set directory permissions/ownership
+# (function def in tdqg-node-dir-mgmt.sh)
+setDirOwnershipAndPermissions 
+
+# A timestamp that can be used to create a unique file name for
+# thread and heap dumps
+DATE_SUFFIX=`date +%Y%m%d%H%M%S`
+
+GetServiceProcIDs()
+{
+   ps -u ${TDQG_NODE_USER} | grep -E '[t]dqg|[Q]GL' | grep -v 'tdqg-monitor' | awk '{print $1}'
+}
+
+GetNodePid()
+{
+    # leaving QGLW just in case an old QGLWatchDog is still running on node as upgrade failed
+    ps -u ${TDQG_NODE_USER} | grep -E '[t]dqg-node|[Q]GLW' | awk '{print $1}'
+}
+
+IsServiceRunning ()
+{
+   test -n "$(GetNodePid)"
+}
+
+IsQueryGridServicesRunning ()
+{
+   test -n "$(GetServiceProcIDs)"
+}
+
+# The echo return value for success (defined in /etc/rc.config).
+rc_reset
+
+# Set the open file limit.
+# only root user can perform this operation
+if [ "$(whoami)" == "root" ] ; then
+    ulimit -n 65536
+fi
+
+cd "${TDQG_NODE_INSTALL_DIR}"
+NODE_HOME=`pwd`
+case "$1" in
+    start|monitor)
+        TDQG_NODE_CMD="GOTRACEBACK=crash $NODE_HOME/tdqg-node -javapathFromEnv ${TDQG_NODE_JAVA_HOME} -javapathFromEnvError \"${JAVA_PATH_ERROR}\"" 
+        echo -n "Starting tdqg-node"
+        if IsServiceRunning ; then
+          rc_failed 0
+        else
+          # remove everything from tdqg tmp dir (in case JVM didn't shut down properly and there are still files there)
+          rm -f ${TDQG_TMP_DIR}/*
+          
+          # save off last couple of error logs
+          mv ${TDQG_NODE_VER_LOG_DIR}/tdqg-node.error.log.1 ${TDQG_NODE_VER_LOG_DIR}/tdqg-node.error.log.2 &> /dev/null 
+          mv ${TDQG_NODE_VER_LOG_DIR}/tdqg-node.error.log ${TDQG_NODE_VER_LOG_DIR}/tdqg-node.error.log.1 &> /dev/null
+
+          CMD="${TDQG_NODE_CMD} &> ${TDQG_NODE_VER_LOG_DIR}/tdqg-node.error.log &"
+          if [ "$1" == "monitor" ] ; then
+            eval "${CMD}"
+          else
+            su -c "${CMD}" ${TDQG_NODE_USER}
+          fi
+
+          retries=5
+          while [ $retries -gt 0 ]
+          do
+             sleep 2
+             if IsServiceRunning ; then
+               break;
+             else
+               retries=$((retries-1));
+             fi
+          done
+          if [ $retries -eq 0 ]
+          then
+             rc_failed 7
+          else
+             rc_failed 0
+          fi
+        fi
+        rc_status -v
+    ;;
+
+    stop)
+        echo -n "Stopping tdqg-node"
+        if IsServiceRunning ; then
+            # signal to tdqg-node to shutdown
+            kill $(GetNodePid)
+            # wait 75 sec for graceful shutdown before forced shutdown.
+            wait_sec=75
+            while [ "$wait_sec" != "0" ] ; do
+                sleep 1
+                if ! IsServiceRunning ; then
+                    rc_failed 0
+                    break
+                fi
+                wait_sec=$((wait_sec -1))
+            done
+        fi
+        # if service is __still__ running, hard kill 
+        if IsServiceRunning ; then
+            kill -9 $(GetNodePid)
+        fi
+
+        if IsQueryGridServicesRunning; then
+            # now that tdqg-node is killed (and can't spawn any more processes) kill all children
+            pkill -9 -u ${TDQG_NODE_USER}
+
+            echo "All tdqg-node processes shutdown"
+        fi
+
+        if IsQueryGridServicesRunning; then
+            rc_failed 7
+        fi
+
+        # Remember status and be verbose
+        rc_status -v
+    ;;
+
+    try-restart)
+        ## Stop the service and if this succeeds (i.e. the
+        ## service was running before), start it again.
+        ## Note: try-restart is not (yet) part of LSB (as of 0.7.5)
+        $0 status && $0 restart
+    ;;
+
+    restart)
+        ## Stop the service and regardless of whether it was
+        ## running or not, start it again.
+        $0 stop
+        $0 start
+        rc_status
+    ;;
+
+    force-reload)
+        ## Signal the daemon to reload its config. Most daemons
+        ## do this on signal 1 (SIGHUP).
+        ## If it does not support it, restart.
+
+        echo -n "Reload tdqg-node "
+        $0 stop  &&  $0 start
+        rc_status
+    ;;
+
+    reload)
+        ## Like force-reload, but if daemon does not support
+        ## signalling, do nothing (!)
+        rc_failed 3
+        rc_status -v
+     ;;
+
+     status)
+        echo -n "Checking for tdqg-node: "
+
+        # Status has a slightly different for the status command:
+        # 0 - service running
+        # 1 - service dead, but /var/run/  pid  file exists
+        # 2 - service dead, but /var/lock/ lock file exists
+        # 3 - service not running
+
+        # NOTE: checkproc returns LSB compliant status values.
+        if IsServiceRunning ; then
+            rc_failed 0
+        else
+            rc_failed 3
+        fi
+        rc_status -v
+    ;;
+
+    probe)
+        rc_failed 3
+        rc_status -v
+    ;;
+
+    preinstall)
+        TDQG_PREINSTALL_CMD="./tdqg-node --preinstall"
+        exec su -c "${TDQG_PREINSTALL_CMD}" ${TDQG_NODE_USER} 
+    ;;
+
+    ps)
+    ;;
+
+    stack)
+    ;;
+
+    heap)
+    ;;
+
+    dump)
+    ;;
+
+    *)
+        echo "Usage: $0 {start|stop|status|restart|ps|stack|heap|dump}"
+        exit 1
+    ;;
+esac

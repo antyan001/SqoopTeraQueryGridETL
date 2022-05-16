@@ -1,0 +1,19 @@
+[Unit]	
+Description=Teradata QueryGrid Node Services	
+Before=multi-user.target graphical.target	
+After=network-online.target	
+Wants=network-online.target	
+
+[Service]
+Restart=always
+TimeoutSec=5min
+IgnoreSIGPIPE=no
+KillMode=process
+GuessMainPID=no
+RemainAfterExit=no
+ExecStart=/opt/teradata/tdqg/node/tdqg-monitor
+User=tdqg
+Group=querygrid
+
+[Install]
+WantedBy=multi-user.target graphical.target

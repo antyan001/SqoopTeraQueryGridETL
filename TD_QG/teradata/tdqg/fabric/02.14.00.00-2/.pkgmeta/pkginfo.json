@@ -1,0 +1,8 @@
+{
+    "type" : "FABRIC",
+    "name" : "tdqg-fabric",
+    "version" : "02.14.00.00-2",
+    "platform" : "linux-x64",
+    "glibcVer" : "2.11.3",
+    "buildDate" : "2020-10-17T00:21:24+00"
+}

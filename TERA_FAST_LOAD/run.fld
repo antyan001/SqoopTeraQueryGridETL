@@ -1,0 +1,88 @@
+
+    logon TDSB15.cgs.sbrf.ru/ektov1-av, pass;
+
+    set record vartext  ";";
+    record 2;
+
+    database PRD_DB_CLIENT4D_DEV1;
+    drop table PRD_DB_CLIENT4D_DEV1.lal_db_hist_out_err;
+    drop table PRD_DB_CLIENT4D_DEV1.lal_db_hist_out_err1;
+    drop table PRD_DB_CLIENT4D_DEV1.lal_db_hist_out_err2;
+    drop table PRD_DB_CLIENT4D_DEV1.lal_db_hist_out;
+
+    CREATE MULTISET TABLE lal_db_hist_out,
+        NO FALLBACK,
+        NO BEFORE JOURNAL,
+        NO AFTER JOURNAL,
+        CHECKSUM = DEFAULT,
+        DEFAULT MERGEBLOCKRATIO,
+        MAP = TD_MAP2
+        (
+            ROW_ID INTEGER,
+    	INN VARCHAR(20) CHARACTER SET UNICODE NOT CASESPECIFIC,
+	MODEL_NAME VARCHAR(800) CHARACTER SET UNICODE NOT CASESPECIFIC,
+	MODEL_TYPE VARCHAR(800) CHARACTER SET UNICODE NOT CASESPECIFIC,
+	ID_SCEN VARCHAR(800) CHARACTER SET UNICODE NOT CASESPECIFIC,
+	HYPOTHESIS VARCHAR(800) CHARACTER SET UNICODE NOT CASESPECIFIC,
+	CLIENT_TYPE VARCHAR(800) CHARACTER SET UNICODE NOT CASESPECIFIC,
+	PROBA FLOAT,
+	CREATE_DT TIMESTAMP FORMAT 'YYYY-MM-DDBHH:MI:SS',
+	CREATE_DT_DAY DATE FORMAT 'YYYY-MM-DD'
+	)
+	PRIMARY INDEX (ROW_ID)
+	PARTITION BY RANGE_N(create_dt_day BETWEEN DATE '2020-01-01' AND DATE '2025-01-01' EACH INTERVAL '1' DAY);
+    create error table PRD_DB_CLIENT4D_DEV1.lal_db_hist_out_err for PRD_DB_CLIENT4D_DEV1.lal_db_hist_out;
+    begin loading PRD_DB_CLIENT4D_DEV1.lal_db_hist_out
+        errorfiles PRD_DB_CLIENT4D_DEV1.lal_db_hist_out_err1, PRD_DB_CLIENT4D_DEV1.lal_db_hist_out_err2
+        checkpoint 1500000;
+
+    define
+
+    in_ROW_ID (VARCHAR(500)),
+	in_INN (VARCHAR(500)),
+	in_MODEL_NAME (VARCHAR(500)),
+	in_MODEL_TYPE (VARCHAR(500)),
+	in_ID_SCEN (VARCHAR(500)),
+	in_HYPOTHESIS (VARCHAR(500)),
+	in_CLIENT_TYPE (VARCHAR(500)),
+	in_PROBA (VARCHAR(500)),
+	in_CREATE_DT (VARCHAR(500)),
+	in_CREATE_DT_DAY (VARCHAR(500))
+
+    file="U:\FAST_LOAD\csv\lal_db_hist_out.csv";
+
+    SHOW;
+
+    insert into PRD_DB_CLIENT4D_DEV1.lal_db_hist_out (
+
+    ROW_ID,
+	INN,
+	MODEL_NAME,
+	MODEL_TYPE,
+	ID_SCEN,
+	HYPOTHESIS,
+	CLIENT_TYPE,
+	PROBA,
+	CREATE_DT,
+	CREATE_DT_DAY
+
+    )
+
+    values (
+
+    :in_ROW_ID,
+:in_INN,
+:in_MODEL_NAME,
+:in_MODEL_TYPE,
+:in_ID_SCEN,
+:in_HYPOTHESIS,
+:in_CLIENT_TYPE,
+:in_PROBA,
+:in_CREATE_DT(FORMAT 'YYYY-MM-DDBHH:MI:SS'),
+	:in_CREATE_DT_DAY(FORMAT 'YYYY-MM-DD')
+
+    );
+
+    end loading;
+    logoff;
+
