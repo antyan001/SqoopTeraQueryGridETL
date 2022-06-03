@@ -9,7 +9,7 @@ PASS=$(cat /home/$(whoami)/pass/userpswrd | sed 's/\r//g')
 function runBeeline {
 printf "$PASS" | kinit $(whoami)@$realm
 beeline<<EOF
-!connect jdbc:hive2://pklis-chd002185.labiac.df.sbrf.ru:10000/default;principal=hive/_HOST@${realm}
+!connect jdbc:hive2://$HOSTNAME:10000/default;principal=hive/_HOST@${realm}
 !add JAR /opt/workspace/${USER}/notebooks/TD_QG/teradata/tdqg/connector/tdqg-hive-connector/02.14.00.00-1/lib/hive-loaderfactory-02.14.00.00-1.jar
 ${1}
 EOF
