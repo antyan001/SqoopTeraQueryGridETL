@@ -113,9 +113,9 @@ SEP=";"
 NAT_MASK      = "2099-01-01"
 NAT_YEAR_MASK = "2099"
 
-TERADATA_HOST = "TDSB15.cgs.sbrf.ru"
-DB = "PRD_DB_CLIENT4D_DEV1"
-USERNAME = "ektov1-av"
+TERADATA_HOST = "TDSB15"
+DB = ""
+USERNAME = ""
 #***************************************************************
 #***************************************************************
 
