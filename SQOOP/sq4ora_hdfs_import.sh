@@ -21,7 +21,7 @@ sqoop job \
 --create cvm_ora2hdfs_job \
 -- import \
 --connection-manager org.apache.sqoop.manager.OracleManager \
---connect jdbc:oracle:thin:@//10.112.79.164:1521/iskra4 \
+--connect jdbc:oracle:thin:@//$ip:$port/$schema \
 --username ISKRA_CVM \
 --password "$PASS" \
 --table "MA_CMDM_MA_DEAL" \
