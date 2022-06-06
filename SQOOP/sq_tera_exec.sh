@@ -14,5 +14,5 @@ if [ -s "${pass_hdfs}/terapswrd" ]; then
     hdfs dfs -chmod 744 "${pass_hdfs}/terapswrd"
 fi
 
-printf "${PASS}" | sqoop job --exec cvm_hdfs2tera_job -- --username ektov1-av --password-file "${pass_hdfs}/terapswrd"
+printf "${PASS}" | sqoop job --exec cvm_hdfs2tera_job -- --username --password-file "${pass_hdfs}/terapswrd"
 # printf "${PASS}\n${PASS}" | sqoop job --exec cvm_hdfs2tera_job -- --username ektov1-av -P
