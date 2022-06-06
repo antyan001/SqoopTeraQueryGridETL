@@ -22,9 +22,9 @@ sqoop job \
 -- import \
 --connection-manager org.apache.sqoop.manager.OracleManager \
 --connect jdbc:oracle:thin:@//$ip:$port/$schema \
---username ISKRA_CVM \
+--username  \
 --password "$PASS" \
---table "ISKRA_CVM.MA_CMDM_MA_DEAL" \
+--table "" \
 --split-by "to_number(to_char(CREATE_DT, 'yyyymmddhh24miss'))" \
 --verbose \
 --direct \
