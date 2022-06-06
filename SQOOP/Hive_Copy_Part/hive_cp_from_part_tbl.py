@@ -99,10 +99,10 @@ hive.setConf('hive.merge.size.per.task', 256000000)
 #*******************************************************************************
 #*******************************************************************************
 
-TERADATA_HOST = "TDSB15.cgs.sbrf.ru"
-DB = "PRD_DB_CLIENT4D_DEV1"
+TERADATA_HOST = "TDSB15"
+DB = ""
 # DATABASE_NAME = "report_all_voronka"
-USERNAME = "ektov1-av"
+USERNAME = ""
 PASSWORD = getpass()
 db = TeraDB(TERADATA_HOST, DB, USERNAME, PASSWORD)
 
