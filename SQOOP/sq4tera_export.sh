@@ -28,9 +28,9 @@ sqoop job \
 --create cvm_hdfs2tera_job \
 -- export \
 --connection-manager org.apache.sqoop.manager.GenericJdbcManager \
---connect "jdbc:teradata://TDSB15.cgs.sbrf.ru/database=PRD_DB_CLIENT4D_DEV1, LOGMECH=LDAP, CHARSET=UTF8, TYPE=FASTEXPORT, COLUMN_NAME=ON, MAYBENULL=ON" \
+--connect "jdbc:teradata://TDSB15/database=$DB_NAME, LOGMECH=LDAP, CHARSET=UTF8, TYPE=FASTEXPORT, COLUMN_NAME=ON, MAYBENULL=ON" \
 --driver com.teradata.jdbc.TeraDriver \
---username ektov1-av \
+--username  \
 --password "$PASS" \
 --table "LAL_DB_HIST_OUT" \
 --export-dir "/user/hive/warehouse/lal_db_hist_out/" \
