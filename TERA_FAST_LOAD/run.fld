@@ -1,5 +1,5 @@
 
-    logon TDSB15.cgs.sbrf.ru/ektov1-av, pass;
+    logon $DB/$login, pass;
 
     set record vartext  ";";
     record 2;
