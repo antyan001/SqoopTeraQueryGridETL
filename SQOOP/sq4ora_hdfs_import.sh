@@ -22,7 +22,7 @@ sqoop job \
 -- import \
 --connection-manager org.apache.sqoop.manager.OracleManager \
 --connect jdbc:oracle:thin:@//$ip:$port/$schema \
---username ISKRA_CVM \
+--username  \
 --password "$PASS" \
 --table "MA_CMDM_MA_DEAL" \
 --where "CREATE_DT >= to_timestamp('2016-01-01 00:00:00', 'yyyy-mm-dd hh24:mi:ss') AND CREATE_DT <= to_timestamp('2025-01-01 00:00:00', 'yyyy-mm-dd hh24:mi:ss')" \
